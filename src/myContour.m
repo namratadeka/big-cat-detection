@@ -1,0 +1,62 @@
+function X = myContour(cI, J)
+    PlotRate = 2;
+    I = double(cI);
+    img = I(:,:,1);
+    [svals,idx] = sort(J(:),'descend');
+    J(isnan(J)) = min(J(:));
+    svals = unique(svals);
+    [mx,i] = max(svals);
+    J(isinf(J)) = svals(i-1);
+    l = imcomplement(J);
+    g = l(:,:,1);
+    %g = 1./(1+J(:,:,1));
+    epsilon = 4.5;
+    %mu = 0.4;
+    timestep = 50;
+    %timestep = mu/0.2;
+    mu = 0.2/timestep;
+    lambda = 2;
+    alf = 1.5;
+    [nrow, ncol]=size(img);
+    %mask = roipoly;
+    s = size(img);
+    mask = zeros(s);
+    mask(25:end-25,25:end-25) = 1;
+    c0 = 4;
+    initialLSF= c0*2*(0.5-mask);
+    u=initialLSF;
+    result = zeros(size(img));
+    figure,imshow(result,[]); hold on; axis off;axis equal;
+    contour(u,[0 0],'g','LineWidth',2);
+    title('Initial contour');
+    N = 50;
+    for n = 1:N
+       u=EVOLUTION(u, g ,lambda, mu, alf, epsilon, timestep, 1);      
+        if mod(n,PlotRate)==0
+            pause(0.001);
+            imshow(result,[]); hold on;axis off;axis equal;
+            contour(u,[0 0],'w','LineWidth',2);
+            iterNum=['Contour Evolution',num2str(n),' iterations'];        
+            title(iterNum);
+            hold off;
+        end 
+    end
+    imshow(result, []);hold on;
+    contour(u,[0 0],'w','LineWidth',10);
+    axis off;axis equal;
+    f = getframe(gca);
+    [X,map] = frame2im(f);
+    iterNum=['Contour Evolution',num2str(n),' iterations'];        
+    title(iterNum);
+    xs = size(X);
+    s = size(result);
+    w = xs(2) - s(2);
+    h = xs(1) - s(1);
+    X = imcrop(X, [w h s(2)-1 s(1)-1]);
+%figure,imshow(imcomplement(u));
+%ed = imfill(imcomplement(u),'holes');
+%figure,imshow(ed);
+%l = graythresh(ed);
+%led = im2bw(ed,l);
+%[edg, th] = edge(led,'Canny');
+%figure,imshow(edg);
